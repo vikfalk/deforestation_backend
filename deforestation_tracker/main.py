@@ -7,7 +7,7 @@ from PIL import Image
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from deforestation_tracker.segmenter import segment, segment_self
-from deforestation_tracker.image_array_loaders import load_img_array_from_satellite, load_img_array_locally
+from deforestation_tracker.image_array_loaders import load_img_array_from_satellite
 from deforestation_tracker.custom_layer import RepeatElements
 
 # INSTRUCTION:
@@ -22,18 +22,16 @@ def index():
 
 @app.get("/get_image_from_satellite_with_params")
 def get_image_from_satellite_with_params(
-    start_timeframe: str,
-    end_timeframe: str,
+    date: str,
     longitude: str,
-    latitude: str,
-    sample_number: str,
-    square_size: str):
-
+    latitude: str
+    ):
     model = load_model('./deforestation_tracker/model_ressources/unet-attention-3d.hdf5')
+
     image_array, request_info_date = load_img_array_from_satellite(
         lat_deg=float(latitude),
         lon_deg=float(longitude),
-        end_timeframe=str(end_timeframe),  # assuming format "2023-02-03"
+        date=str(date),
     )
 
     original_image_list = image_array.flatten().tolist()
@@ -59,13 +57,13 @@ def do_everything(
     end_sat_image_array, end_date_info = load_img_array_from_satellite(
         lat_deg=float(latitude),
         lon_deg=float(longitude),
-        end_timeframe=str(end_timeframe)  # assuming format "2023-02-03"
+        date=str(end_timeframe)  # assuming format "2023-02-03"
     )
 
     start_sat_image_array, start_date_info = load_img_array_from_satellite(
         lat_deg=float(latitude),
         lon_deg=float(longitude),
-        end_timeframe=str(start_timeframe)  # assuming format "2023-02-03"
+        date=str(start_timeframe)  # assuming format "2023-02-03"
     )
 
     #End sat present
@@ -92,7 +90,7 @@ def do_everything(
 
 # Selfmade model endpoints
 
-@api_app.get("/get_image_from_satellite_self")
+@app.get("/get_image_from_satellite_self")
 def get_image_from_satellite_self():
     model = load_model('./deforestation_tracker/model_ressources/att_unet_4b.hdf5', custom_objects={'RepeatElements': RepeatElements})
     image_array = load_img_array_from_satellite(request_type='4-band')
@@ -118,7 +116,7 @@ def get_image_from_satellite_with_params_self(
     image_array = load_img_array_from_satellite(
         lat_deg=float(latitude),
         lon_deg=float(longitude),
-        end_timeframe=str(end_timeframe),  # assuming format "2023-02-03"
+        date=str(end_timeframe),  # assuming format "2023-02-03"
         request_type='4-band'
     )
     image_array = image_array[0]
